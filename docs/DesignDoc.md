@@ -19,8 +19,7 @@
 8. [Security & Privacy](#8-security--privacy)
 9. [Performance Considerations](#9-performance-considerations)
 10. [Deliverables](#10-deliverables)
-11. [Future Roadmap](#11-future-roadmap)
-12. [Success Metrics](#12-success-metrics)
+
 
 ---
 
