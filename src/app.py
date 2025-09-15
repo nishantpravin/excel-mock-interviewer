@@ -118,17 +118,13 @@ def ask_next_question():
         st.toast("Switched to deterministic mode (LLM unavailable).", icon="⚠️")
         q = fallback_next_question(E["questions_bank"], E["used_ids"], E["scores"])
 
+        # Ensure we don't repeat a previously asked id or prompt
     qid = q.get("id", f"Q-{E['q_count']+1}")
-    if qid in E["used_ids"]:
-        # ultra-safe de-dup if model still collided
+    prev_prompts = {h["q"]["prompt"].strip().lower() for h in E["history"] if h.get("q")}
+    if qid in E["used_ids"] or q.get("prompt", "").strip().lower() in prev_prompts:
         q = fallback_next_question(E["questions_bank"], E["used_ids"], E["scores"])
         qid = q.get("id", f"Q-{E['q_count']+1}")
 
-    E["current_q"] = q
-    E["used_ids"].add(qid)
-    E["q_start"] = time.time()
-    E["awaiting_answer"] = True
-    E["q_count"] += 1
 
     append_assistant(q["prompt"])
 
