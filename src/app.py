@@ -69,7 +69,7 @@ with st.sidebar:
     use_llm_requested = st.toggle("Use LLM (if available)", value=default_toggle, disabled=not can_use_llm())
     new_det_only = not (use_llm_requested and can_use_llm())
 
-    if new_det_only != E["deterministic_only"]:
+    if new_det_only != E["deterministic_only"]):
         # switch modes without crashing; clear reason when enabling LLM
         E["deterministic_only"] = new_det_only
         E["mode_reason"] = "" if not new_det_only else E.get("mode_reason", "")
@@ -274,16 +274,14 @@ if E["q_count"] >= MAX_Q and not E["awaiting_answer"]:
             E["show_report"] = True
             st.rerun()
     else:
-        # Show the report box with summary + downloads
-        with st.expander("📄 Report", expanded=True):
+        # Show the report box with tabs (no nested expanders)
+        with st.container(border=True):
             st.markdown("### 📄 Report")
-            md = render_markdown(E["report_paths"]["S"])
-            st.markdown(md)
 
-            # --- Score trend charts ---
             import pandas as pd
+            S_snap = E["report_paths"]["S"]
             rows = []
-            for i, s in enumerate(E["report_paths"]["S"]["scores"], start=1):
+            for i, s in enumerate(S_snap["scores"], start=1):
                 rows.append({
                     "Q": i,
                     "Total": s.get("total", 0.0),
@@ -293,28 +291,41 @@ if E["q_count"] >= MAX_Q and not E["awaiting_answer"]:
                     "Depth": s.get("depth", 0.0),
                 })
             df = pd.DataFrame(rows).set_index("Q")
-            st.markdown("#### 📈 Score trend")
-            st.line_chart(df[["Total"]])
-            with st.expander("Dimension breakdown", expanded=False):
-                st.line_chart(df[["Accuracy", "Completeness", "Clarity", "Depth"]])
 
-            col1, col2 = st.columns(2)
-            with col1:
-                with open(E["report_paths"]["pdf"], "rb") as f:
-                    st.download_button(
-                        "⬇️ Download PDF",
-                        data=f.read(),
-                        file_name=os.path.basename(E["report_paths"]["pdf"]),
-                        mime="application/pdf",
-                    )
-            with col2:
-                with open(E["report_paths"]["csv"], "rb") as f:
-                    st.download_button(
-                        "⬇️ Download CSV",
-                        data=f.read(),
-                        file_name=os.path.basename(E["report_paths"]["csv"]),
-                        mime="text/csv",
-                    )
+            tab_sum, tab_charts, tab_dl = st.tabs(["Summary", "Charts", "Downloads"])
+
+            # Summary tab
+            with tab_sum:
+                md = render_markdown(S_snap)
+                st.markdown(md)
+
+            # Charts tab
+            with tab_charts:
+                st.markdown("#### 📈 Score trend (Total)")
+                st.line_chart(df[["Total"]])
+                show_dims = st.checkbox("Show dimension breakdown", value=False)
+                if show_dims:
+                    st.line_chart(df[["Accuracy", "Completeness", "Clarity", "Depth"]])
+
+            # Downloads tab
+            with tab_dl:
+                col1, col2 = st.columns(2)
+                with col1:
+                    with open(E["report_paths"]["pdf"], "rb") as f:
+                        st.download_button(
+                            "⬇️ Download PDF",
+                            data=f.read(),
+                            file_name=os.path.basename(E["report_paths"]["pdf"]),
+                            mime="application/pdf",
+                        )
+                with col2:
+                    with open(E["report_paths"]["csv"], "rb") as f:
+                        st.download_button(
+                            "⬇️ Download CSV",
+                            data=f.read(),
+                            file_name=os.path.basename(E["report_paths"]["csv"]),
+                            mime="text/csv",
+                        )
 
         st.caption("You can close the box or start another interview anytime.")
         if st.button("🔁 Start another interview"):
