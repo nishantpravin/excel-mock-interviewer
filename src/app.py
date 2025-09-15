@@ -69,7 +69,7 @@ with st.sidebar:
     use_llm_requested = st.toggle("Use LLM (if available)", value=default_toggle, disabled=not can_use_llm())
     new_det_only = not (use_llm_requested and can_use_llm())
 
-    if new_det_only != E["deterministic_only"]):
+    if new_det_only != E["deterministic_only"]:
         # switch modes without crashing; clear reason when enabling LLM
         E["deterministic_only"] = new_det_only
         E["mode_reason"] = "" if not new_det_only else E.get("mode_reason", "")
