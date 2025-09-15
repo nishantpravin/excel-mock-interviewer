@@ -10,7 +10,10 @@ from dialog import USE_LLM, llm_next_question, llm_hint, fallback_next_question
 load_dotenv()
 APP_NAME = os.getenv("APP_NAME", "Excel Mock Interviewer")
 MAX_Q = int(os.getenv("NUM_QUESTIONS", "7"))
-CAN_USE_LLM = bool(os.getenv("OPENAI_API_KEY"))
+
+def can_use_llm() -> bool:
+    """Runtime check (works with Streamlit Cloud Secrets)."""
+    return bool(os.getenv("OPENAI_API_KEY"))
 
 st.set_page_config(page_title=APP_NAME, page_icon="📊", layout="centered")
 
@@ -30,15 +33,15 @@ if "engine" not in st.session_state:
         "awaiting_answer": False,  # True right after asking; False after scoring/skip
         "revealed": set(),         # "review model answer" buttons clicked
         "deterministic_only": os.getenv("DETERMINISTIC_ONLY", "false").lower() == "true",
-        "mode_reason": "",   
-        "show_report": False,       # whether to show the report box
-        "report_paths": {},        # explanation if auto-switched
+        "mode_reason": "",
+        "show_report": False,      # whether to show the report box
+        "report_paths": {},        # stores generated file paths & S snapshot
     }
 E = st.session_state.engine
 
 # ---------------- UI helpers ----------------
 def render_mode_banner():
-    use_llm_active = (not E["deterministic_only"]) and CAN_USE_LLM
+    use_llm_active = (not E["deterministic_only"]) and can_use_llm()
     mode = "LLM-driven" if use_llm_active else "Deterministic"
     color = "#0f9960" if use_llm_active else "#e03a3e"
     st.markdown(
@@ -62,9 +65,9 @@ def show_progress():
 # ---------------- Sidebar (safe toggle + timer) ----------------
 with st.sidebar:
     st.header("Settings")
-    default_toggle = CAN_USE_LLM and (not E["deterministic_only"])
-    use_llm_requested = st.toggle("Use LLM (if available)", value=default_toggle, disabled=not CAN_USE_LLM)
-    new_det_only = not (use_llm_requested and CAN_USE_LLM)
+    default_toggle = can_use_llm() and (not E["deterministic_only"])
+    use_llm_requested = st.toggle("Use LLM (if available)", value=default_toggle, disabled=not can_use_llm())
+    new_det_only = not (use_llm_requested and can_use_llm())
 
     if new_det_only != E["deterministic_only"]:
         # switch modes without crashing; clear reason when enabling LLM
@@ -99,7 +102,7 @@ def ask_next_question():
         return  # prevent double-ask on rerun
 
     try:
-        if (not E["deterministic_only"]) and CAN_USE_LLM:
+        if (not E["deterministic_only"]) and can_use_llm():
             q = llm_next_question(st.session_state.chat, E["scores"])
         else:
             q = fallback_next_question(E["questions_bank"], E["used_ids"], E["scores"])
@@ -161,7 +164,7 @@ if prompt is not None:
             q = E["current_q"]
             if q:
                 try:
-                    if (not E["deterministic_only"]) and CAN_USE_LLM:
+                    if (not E["deterministic_only"]) and can_use_llm():
                         h = llm_hint(q, st.session_state.chat)
                     else:
                         need = q.get("concepts_required", [])
@@ -190,7 +193,7 @@ if prompt is not None:
         t_s = int(time.time() - (E["q_start"] or time.time()))
         k = keyword_scoring(text, q)
         l = None
-        if (not E["deterministic_only"]) and CAN_USE_LLM:
+        if (not E["deterministic_only"]) and can_use_llm():
             try:
                 l = llm_scoring(text, q)
             except Exception as e:
@@ -245,7 +248,6 @@ if prompt is not None:
             )
         st.rerun()
 
-# ---------------- Final report ----------------
 # ---------------- Final report (button-revealed) ----------------
 if E["q_count"] >= MAX_Q and not E["awaiting_answer"]:
     st.divider()
@@ -263,7 +265,6 @@ if E["q_count"] >= MAX_Q and not E["awaiting_answer"]:
             }
 
             # Generate files just-in-time
-            import os, time
             os.makedirs("reports", exist_ok=True)
             pdf_path = render_pdf(S, f"reports/report_{int(time.time())}.pdf")
             csv_path = render_csv(S, f"reports/transcript_{int(time.time())}.csv")
@@ -278,6 +279,24 @@ if E["q_count"] >= MAX_Q and not E["awaiting_answer"]:
             st.markdown("### 📄 Report")
             md = render_markdown(E["report_paths"]["S"])
             st.markdown(md)
+
+            # --- Score trend charts ---
+            import pandas as pd
+            rows = []
+            for i, s in enumerate(E["report_paths"]["S"]["scores"], start=1):
+                rows.append({
+                    "Q": i,
+                    "Total": s.get("total", 0.0),
+                    "Accuracy": s.get("accuracy", 0.0),
+                    "Completeness": s.get("completeness", 0.0),
+                    "Clarity": s.get("clarity", 0.0),
+                    "Depth": s.get("depth", 0.0),
+                })
+            df = pd.DataFrame(rows).set_index("Q")
+            st.markdown("#### 📈 Score trend")
+            st.line_chart(df[["Total"]])
+            with st.expander("Dimension breakdown", expanded=False):
+                st.line_chart(df[["Accuracy", "Completeness", "Clarity", "Depth"]])
 
             col1, col2 = st.columns(2)
             with col1:
@@ -301,4 +320,3 @@ if E["q_count"] >= MAX_Q and not E["awaiting_answer"]:
         if st.button("🔁 Start another interview"):
             st.session_state.clear()
             st.rerun()
-
