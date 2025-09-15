@@ -10,6 +10,8 @@ from dialog import USE_LLM, llm_next_question, llm_hint, fallback_next_question
 load_dotenv()
 APP_NAME = os.getenv("APP_NAME", "Excel Mock Interviewer")
 MAX_Q = int(os.getenv("NUM_QUESTIONS", "7"))
+TYPE_SPEED_MS = int(os.getenv("TYPE_SPEED_MS", "18"))  # ~18ms per char (~55 chars/sec)
+MAX_TYPE_CHARS = int(os.getenv("MAX_TYPE_CHARS", "480"))  # safety cap for very long prompts
 
 def can_use_llm() -> bool:
     """Runtime check (works with Streamlit Cloud Secrets)."""
@@ -38,6 +40,10 @@ if "engine" not in st.session_state:
         "report_paths": {},        # stores generated file paths & S snapshot
     }
 E = st.session_state.engine
+
+# Track which prompts were already animated so Streamlit re-runs don’t retype
+if "typed_ids" not in st.session_state:
+    st.session_state.typed_ids = set()
 
 # ---------------- UI helpers ----------------
 def render_mode_banner():
@@ -92,6 +98,37 @@ def append_assistant(msg: str):
 def append_user(msg: str):
     st.session_state.chat.append({"role": "user", "content": msg})
 
+def render_typing_prompt(q: dict):
+    """Animate typing the question once; then store to chat for future replays."""
+    qid = q.get("id", "")
+    text = q.get("prompt", "")
+
+    # If we already typed this question, just append once to chat and return
+    if qid in st.session_state.typed_ids:
+        append_assistant(text)
+        return
+
+    # Live typing animation
+    with st.chat_message("assistant"):
+        ph = st.empty()
+        shown = ""
+        # soft cap avoids long blocking for overly long prompts
+        anim_text = text[:MAX_TYPE_CHARS]
+        cursor_on = True
+        for ch in anim_text:
+            shown += ch
+            # Blink cursor: ▌ toggles on/off every char, looks nice & cheap
+            ph.markdown(shown + (" ▌" if cursor_on else ""))
+            cursor_on = not cursor_on
+            # Streamlit-friendly small sleep
+            time.sleep(max(0.001, TYPE_SPEED_MS / 1000.0))
+        # Final commit without cursor
+        ph.markdown(text)
+
+    # Persist to transcript for subsequent renders
+    append_assistant(text)
+    st.session_state.typed_ids.add(qid)
+
 def ask_next_question():
     """
     Ask another question only if we're not already waiting for an answer.
@@ -131,7 +168,7 @@ def ask_next_question():
     E["awaiting_answer"] = True
     E["q_count"] += 1
 
-    append_assistant(q["prompt"])
+    render_typing_prompt(q)
 
 # ---------------- First render ----------------
 st.title("📊 " + APP_NAME)
