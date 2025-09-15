@@ -54,38 +54,63 @@ def _fallback(level: str) -> Dict[str, Any]:
     }
 
 
-def llm_next_question(transcript: List[Dict[str, Any]], prev_scores: List[float]) -> Dict[str, Any]:
+def llm_next_question(
+    transcript: List[Dict[str, Any]],
+    prev_scores: List[float],
+    used_ids: Optional[set] = None,
+    recent_prompts: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """
+    Generate the next question via LLM but avoid repeats:
+    - Pass 'avoid_ids' and 'avoid_prompts' to the model
+    - If the model still returns a duplicate id/prompt, regenerate a fresh id
+    """
+    used_ids = used_ids or set()
+    recent_prompts = recent_prompts or []
+
+    from openai import OpenAI
+    client = OpenAI()
     level = _choose_level(prev_scores)
-    if not USE_LLM:
-        return _fallback(level)
+
+    user_payload = {
+        "transcript": transcript[-8:],
+        "suggest_level": level,
+        "schema": NEXT_Q_SCHEMA,
+        "constraints": {"max_sentences": 2, "avoid_repetition": True, "excel_focus": True},
+        "avoid_ids": list(used_ids)[-50:],            # pass a bounded list
+        "avoid_prompts": recent_prompts[-10:],        # last few prompts
+    }
+
     try:
-        from openai import OpenAI
-        client = OpenAI()
-        user_payload = {
-            "transcript": transcript[-8:],
-            "suggest_level": level,
-            "schema": NEXT_Q_SCHEMA,
-            "constraints": {"max_sentences": 2, "avoid_repetition": True, "excel_focus": True}
-        }
         resp = client.chat.completions.create(
             model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
-            messages=[{"role":"system","content":SYSTEM_PROMPT},
-                      {"role":"user","content":json.dumps(user_payload)}],
+            messages=[
+                {"role":"system","content":SYSTEM_PROMPT},
+                {"role":"user","content":json.dumps(user_payload)}
+            ],
             temperature=0.4,
-            timeout=20
+            timeout=20,
         )
         data = _safe_json(resp.choices[0].message.content) or {}
     except Exception:
-        # rate limit / quota / network → deterministic fallback
+        # fallback already in your file:
         return _fallback(level)
 
-    # ensure required fields
-    data.setdefault("id", f"LLM-{random.randint(1000,9999)}")
+    # ensure required fields + generate id if missing
     data.setdefault("level", level)
     data.setdefault("prompt", _fallback(level)["prompt"])
     data.setdefault("concepts_required", _fallback(level)["concepts_required"])
     data.setdefault("acceptable_terms", _fallback(level)["acceptable_terms"])
     data.setdefault("model_answer", _fallback(level)["model_answer"])
+    data.setdefault("id", _make_id(data.get("prompt", "")))
+
+    # de-dup id/prompt locally (last line of defense)
+    if data["id"] in used_ids:
+        data["id"] = _make_id(data["prompt"])
+    if data.get("prompt", "").strip() in {p.strip() for p in recent_prompts}:
+        # If prompt text repeats, keep prompt but force a fresh id
+        data["id"] = _make_id(data["prompt"])
+
     return data
 
 def llm_hint(question: Dict[str, Any], transcript: List[Dict[str, Any]]) -> str:

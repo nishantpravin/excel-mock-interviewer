@@ -99,30 +99,34 @@ def ask_next_question():
     Safe LLM->deterministic fallback with reason & toast.
     """
     if E["awaiting_answer"]:
-        return  # prevent double-ask on rerun
+        return
 
     try:
         if (not E["deterministic_only"]) and can_use_llm():
-            q = llm_next_question(st.session_state.chat, E["scores"])
+            recent_prompts = [h["q"]["prompt"] for h in E["history"] if "q" in h and h["q"]]
+            q = llm_next_question(
+                transcript=st.session_state.chat,
+                prev_scores=E["scores"],
+                used_ids=E["used_ids"],
+                recent_prompts=recent_prompts
+            )
         else:
             q = fallback_next_question(E["questions_bank"], E["used_ids"], E["scores"])
     except Exception as e:
-        # Auto-switch to deterministic mode on any LLM error
         E["deterministic_only"] = True
         E["mode_reason"] = f"LLM unavailable: {e.__class__.__name__}"
         st.toast("Switched to deterministic mode (LLM unavailable).", icon="⚠️")
         q = fallback_next_question(E["questions_bank"], E["used_ids"], E["scores"])
 
-    # Ensure we don't repeat a previously asked id
     qid = q.get("id", f"Q-{E['q_count']+1}")
     if qid in E["used_ids"]:
-        # pick another deterministic question if collision occurs
+        # ultra-safe de-dup if model still collided
         q = fallback_next_question(E["questions_bank"], E["used_ids"], E["scores"])
         qid = q.get("id", f"Q-{E['q_count']+1}")
 
     E["current_q"] = q
     E["used_ids"].add(qid)
-    E["q_start"] = time.time()   # <-- start timer here
+    E["q_start"] = time.time()
     E["awaiting_answer"] = True
     E["q_count"] += 1
 
