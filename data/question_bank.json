@@ -1,0 +1,155 @@
+{
+    "levels": ["basic", "intermediate", "advanced"],
+    "questions": [
+        {   "id": "B1",
+            "level": "basic",
+            "prompt": "What does absolute vs. relative cell reference mean in Excel? Give an example of when you'd use $A$1.",
+            "concepts_required": ["absolute reference", "relative reference", "$", "$A$1"],
+            "acceptable_terms": ["anchoring", "fixed reference"],
+            "must_not": ["circular reference"],
+            "model_answer": "Absolute references (e.g., $A$1) do not change when copied; relative references (A1) shift. Use $A$1 to lock a tax rate cell when filling a formula down.",
+            "weights": {"accuracy": 0.4, "completeness": 0.3, "clarity": 0.15, "depth": 0.15}
+            },
+            {
+            "id": "B2",
+            "level": "basic",
+            "prompt": "Explain the difference between VLOOKUP and XLOOKUP, and why XLOOKUP is preferred.",
+            "concepts_required": ["XLOOKUP", "lookup both directions", "exact match by default"],
+            "acceptable_terms": ["approximate match", "column insert safety"],
+            "must_not": ["VLOOKUP requires sorted data for exact match"],
+            "model_answer": "XLOOKUP replaces VLOOKUP, supports left/right lookups, defaults to exact match, handles not found, and is robust to column insertions.",
+            "weights": {"accuracy": 0.4, "completeness": 0.3, "clarity": 0.15, "depth": 0.15}
+            },
+            {
+            "id": "I1",
+            "level": "intermediate",
+            "prompt": "When would you use INDEX‑MATCH instead of VLOOKUP? Provide a short formula example.",
+            "concepts_required": ["INDEX", "MATCH", "left lookup", "flexibility"],
+            "acceptable_terms": ["column insert", "two‑way lookup"],
+            "must_not": [],
+            "model_answer": "INDEX(Marks, MATCH(ID, IDs, 0)) supports left lookups and is resilient to column insertions.",
+            "weights": {"accuracy": 0.4, "completeness": 0.3, "clarity": 0.15, "depth": 0.15}
+            },
+            {
+            "id": "I2",
+            "level": "intermediate",
+            "prompt": "Describe how you'd summarize sales by Region and Product using a PivotTable. Mention at least 3 useful features.",
+            "concepts_required": ["PivotTable", "Rows/Columns/Values", "Filters", "Slicers", "Value Field Settings (Sum/Count)"],
+            "acceptable_terms": ["Grouping", "Show Values As", "Top N"],
+            "must_not": ["manually summing with calculator"],
+            "model_answer": "Insert PivotTable, put Region in Rows, Product in Columns, Sales in Values (Sum). Use Slicers, Number Format, and Show Values As % of Column Total.",
+            "weights": {"accuracy": 0.4, "completeness": 0.3, "clarity": 0.15, "depth": 0.15}
+            },
+            {
+            "id": "A1",
+            "level": "advanced",
+            "prompt": "You receive a monthly CSV with inconsistent date formats and extra columns. Outline how you'd clean and normalize it with Power Query steps.",
+            "concepts_required": ["Power Query", "Change Type", "Split/Trim/Clean", "Remove Columns", "Merge/Append", "Fill Down", "Close & Load"],
+            "acceptable_terms": ["Applied Steps", "Refresh"],
+            "must_not": ["manual edits every month"],
+            "model_answer": "Use Power Query: Get Data (CSV) → detect data types → Trim/Clean → split columns → remove unneeded columns → parse dates with locale → fill down → Close & Load; refresh monthly.",
+            "weights": {"accuracy": 0.4, "completeness": 0.3, "clarity": 0.15, "depth": 0.15}
+            },
+            {
+            "id": "A2",
+            "level": "advanced",
+            "prompt": "Explain dynamic arrays with a brief example using FILTER and UNIQUE for a one‑click report.",
+            "concepts_required": ["dynamic arrays", "FILTER", "UNIQUE", "spill"],
+            "acceptable_terms": ["#SPILL!"],
+            "must_not": [],
+            "model_answer": "=UNIQUE(FILTER(Table1[Customer], Table1[Active]=TRUE)) creates a spill range of active customers that updates automatically.",
+            "weights": {"accuracy": 0.4, "completeness": 0.3, "clarity": 0.15, "depth": 0.15}
+            },
+            {
+            "id": "S1",
+            "level": "scenario",
+            "prompt": "Dataset: Orders(Id, Date, Region, Product, Qty, Price). Find top 3 regions by revenue YTD and explain how you'd automate a monthly refresh using Excel tools.",
+            "concepts_required": ["revenue = Qty*Price", "PivotTable or SUMIFS", "Sort/Top 3", "Power Query refresh"],
+            "acceptable_terms": ["named ranges", "dynamic array"],
+            "must_not": ["manual recompute each month"],
+            "model_answer": "Add Revenue column (Qty*Price) → Pivot by Region → sort and keep Top 3; or SUMIFS with dynamic dates. Use Power Query for monthly CSV import and Refresh All.",
+            "weights": {"accuracy": 0.4, "completeness": 0.3, "clarity": 0.15, "depth": 0.15}
+            },
+            {
+                "id": "A3",
+                "level": "advanced",
+                "prompt": "You have a fact table Sales(Date, Product, Qty, Revenue) linked to a Date table in Power Pivot. Write a DAX measure for YoY Revenue % and explain how to show it in a PivotTable.",
+                "concepts_required": ["Power Pivot", "DAX", "SAMEPERIODLASTYEAR", "CALCULATE", "DIVIDE"],
+                "acceptable_terms": ["TOTALYTD", "DATEADD", "measure", "tabular model"],
+                "model_answer": "YoY % = DIVIDE([Revenue] - CALCULATE([Revenue], SAMEPERIODLASTYEAR('Date'[Date])), CALCULATE([Revenue], SAMEPERIODLASTYEAR('Date'[Date]))). Add to Values and format %, ensure Date table is marked as Date."
+              },
+              {
+                "id": "I3",
+                "level": "intermediate",
+                "prompt": "When would you prefer SUMPRODUCT over SUMIFS? Give a short example formula that applies multiple conditions and handles arrays.",
+                "concepts_required": ["SUMPRODUCT", "array logic", "multiple criteria"],
+                "acceptable_terms": ["coerce boolean", "double unary --", "SUMIFS limitations"],
+                "model_answer": "SUMPRODUCT can handle array expressions beyond SUMIFS. Example: =SUMPRODUCT((Region=\"East\")*(Month>=DATE(2024,1,1))*(Month<=DATE(2024,12,31))*Revenue)."
+              },
+              {
+                "id": "I4",
+                "level": "intermediate",
+                "prompt": "Show a small example of LET + LAMBDA to clean a text column (trim, proper case) and reuse it on a range.",
+                "concepts_required": ["LET", "LAMBDA", "text cleanup", "reusability"],
+                "acceptable_terms": ["helper function", "named LAMBDA"],
+                "model_answer": "Define Name CLEANPROPER = LAMBDA(txt, PROPER(TRIM(txt))). Then use =CLEANPROPER(A2:A100) with dynamic arrays, or map via BYROW if needed."
+              },
+              {
+                "id": "B3",
+                "level": "basic",
+                "prompt": "How do you highlight duplicates across two columns A and B using Conditional Formatting with a formula?",
+                "concepts_required": ["Conditional Formatting", "formula rule", "COUNTIF"],
+                "acceptable_terms": ["relative reference", "applies to range"],
+                "model_answer": "Select A:A, New Rule > Use a formula: =COUNTIF(B:B, A1)>0, pick a format, set Applies to A:A. Repeat reversed if needed."
+              },
+              {
+                "id": "I5",
+                "level": "intermediate",
+                "prompt": "Create a Data Validation drop-down that spills from a UNIQUE list of Products, so it auto-updates. Mention how you’d handle blanks.",
+                "concepts_required": ["Data Validation", "UNIQUE", "spill range", "dynamic named range"],
+                "acceptable_terms": ["# operator", "FILTER", "ignore blanks"],
+                "model_answer": "In D1: =UNIQUE(FILTER(Table1[Product], Table1[Product]<>\"\")) then create a named range ProductsSpill =D1#. In validation, choose List and set =ProductsSpill."
+              },
+              {
+                "id": "PIV1",
+                "level": "advanced",
+                "prompt": "Power Pivot: Create a measure to calculate YoY growth for Total Sales and explain where you would place it.",
+                "concepts_required": ["Power Pivot", "DAX", "CALCULATE", "SAMEPERIODLASTYEAR", "measure"],
+                "acceptable_terms": ["date table", "model", "Fields pane"],
+                "model_answer": "In Power Pivot (Data Model), add a measure: Total Sales := SUM(FactSales[Sales]); YoY Growth % := DIVIDE([Total Sales] - CALCULATE([Total Sales], SAMEPERIODLASTYEAR('Date'[Date])), CALCULATE([Total Sales], SAMEPERIODLASTYEAR('Date'[Date]))). Use in a PivotTable from the Data Model."
+              },
+              {
+                "id": "SUM1",
+                "level": "intermediate",
+                "prompt": "Explain when you would use SUMPRODUCT instead of SUMIFS and give a short example.",
+                "concepts_required": ["SUMPRODUCT", "array logic", "conditional sum"],
+                "acceptable_terms": ["multiple conditions", "boolean coercion"],
+                "model_answer": "SUMPRODUCT handles array math and non-additive logic. Example: SUMPRODUCT((A:A=\"East\")*(B:B=\"Widget\")*(C:C)) sums C where region and product match, even on older Excel without dynamic arrays."
+              },
+              {
+                "id": "LET1",
+                "level": "advanced",
+                "prompt": "Use LET and LAMBDA to create a reusable function to clean text (trim, lower, remove spaces). Show the definition.",
+                "concepts_required": ["LET", "LAMBDA", "text cleanup"],
+                "acceptable_terms": ["name manager", "reusability"],
+                "model_answer": "Define: =LAMBDA(txt, LET(t, TRIM(txt), LOWER(SUBSTITUTE(t, \" \", \"\")))) then name it CleanText in Name Manager. Use as =CleanText(A2)."
+              },
+              {
+                "id": "CF1",
+                "level": "intermediate",
+                "prompt": "Conditional formatting: highlight values in Column A that also appear in Column B using a formula rule.",
+                "concepts_required": ["conditional formatting", "formula rule", "COUNTIF"],
+                "acceptable_terms": ["applies to", "relative reference"],
+                "model_answer": "Select A:A, new formula rule: =COUNTIF($B:$B, A1)>0 and choose a fill color. Applies to A:A."
+              },
+              {
+                "id": "VAL1",
+                "level": "basic",
+                "prompt": "Create a data validation dropdown that spills unique values from a table column.",
+                "concepts_required": ["data validation", "UNIQUE", "spill range"],
+                "acceptable_terms": ["dynamic list", "structured reference"],
+                "model_answer": "In helper cell: =UNIQUE(Table1[Product]). In Data Validation > List, set source to the spill range like =$F$2# (the UNIQUE output)."
+              }
+              
+             ]
+            }

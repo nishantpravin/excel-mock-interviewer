@@ -1,0 +1,6 @@
+streamlit==1.37.1
+openai>=1.40.0
+python-dotenv==1.0.1
+rapidfuzz==3.9.3
+fpdf2==2.7.9
+pydantic==2.8.2

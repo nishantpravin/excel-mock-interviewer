@@ -1,0 +1,8 @@
+q_index,question,answer,accuracy,completeness,clarity,depth,total,time_s
+1,When would you use INDEX-MATCH instead of VLOOKUP? Give a short formula.,bdfbd,0.0,0.0,1.2,0.0,0.22,8
+2,What does absolute vs. relative cell reference mean in Excel? Give an example of when you'd use $A$1.,,0.0,0.0,0.6,0.0,0.11,2
+3,"Explain the difference between VLOOKUP and XLOOKUP, and why XLOOKUP is preferred.",xlookup,3.33,2.33,1.2,1.0,2.32,15
+4,How do you highlight duplicates across two columns A and B using Conditional Formatting with a formula?,sdjnfjsdnf,0.0,0.0,1.2,0.0,0.22,3
+5,When would you use INDEX-MATCH instead of VLOOKUP? Provide a short formula example.,jdanfajd,0.0,0.0,1.2,0.0,0.22,2
+6,Describe how you'd summarize sales by Region and Product using a PivotTable. Mention at least 3 useful features.,sjdfbjad,0.0,0.0,1.2,0.0,0.22,2
+7,You receive a monthly CSV with inconsistent date formats and extra columns. Outline how you'd clean and normalize it with Power Query steps.,jdfda;,0.0,0.0,1.2,0.0,0.22,2

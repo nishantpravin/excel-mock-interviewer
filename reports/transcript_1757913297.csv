@@ -1,0 +1,7 @@
+q_index,question,answer,accuracy,completeness,clarity,depth,total
+1,What does absolute vs. relative cell reference mean in Excel? Give an example of when you'd use $A$1.,,0.0,0.0,1.0,0.0,0.15
+2,"Explain the difference between VLOOKUP and XLOOKUP, and why XLOOKUP is preferred.",dont know,0.0,0.0,1.0,0.0,0.15
+3,When would you use INDEX-MATCH instead of VLOOKUP? Provide a short formula example.,kfgfgksd,0.0,0.0,1.0,0.0,0.15
+4,Describe how you'd summarize sales by Region and Product using a PivotTable. Mention at least 3 useful features.,ksdmfkasd,0.0,0.0,1.0,0.0,0.15
+5,You receive a monthly CSV with inconsistent date formats and extra columns. Outline how you'd clean and normalize it with Power Query steps.,nsdfkjnasd,0.0,0.0,1.0,0.0,0.15
+6,Explain dynamic arrays with a brief example using FILTER and UNIQUE for a one-click report.,asndflknasd,0.0,0.0,1.0,0.0,0.15
