@@ -176,17 +176,24 @@ if prompt is not None:
             st.rerun()
 
         if text.lower() == "skip":
-            q = E["current_q"]
-            t_s = int(time.time() - (E["q_start"] or time.time()))
-            score = keyword_scoring("", q)  # minimal baseline
-            E["scores"].append(score.get("total", 0.0))
-            E["history"].append({"q": q, "a": "", "score": score, "time_s": t_s})
-            E["awaiting_answer"] = False     # <-- allow next question
-            append_assistant("Skipped. I’ll move on.")
-            if E["q_count"] >= MAX_Q:
-                st.rerun()
+          q = E["current_q"]
+          t_s = int(time.time() - (E["q_start"] or time.time()))
+          score = keyword_scoring("", q)  # minimal baseline
+          E["scores"].append(score.get("total", 0.0))
+          E["history"].append({"q": q, "a": "", "score": score, "time_s": t_s})
+
+          # Mark this question as answered (consumed)
+          E["awaiting_answer"] = False
+          E["current_q"] = None  
+
+          append_assistant("Skipped. I’ll move on.")
+
+          if E["q_count"] >= MAX_Q:
+           st.rerun()
+          else:
             ask_next_question()
             st.rerun()
+
 
         # Normal answer -> score
         q = E["current_q"]
